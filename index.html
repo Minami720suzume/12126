@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>クリスマスクイズ🎄</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+            text-align: center;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        #quiz-container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        #progress {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        #question {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        #options {
+            margin: 20px 0;
+        }
+
+        .option-btn {
+            display: block;
+            background-color: white;
+            color: black;
+            border: 1px solid #ddd;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px auto;
+            border-radius: 5px;
+            width: 90%;
+            max-width: 300px;
+            text-align: center;
+        }
+
+        .option-btn:hover {
+            background-color: #f0f0f0;
+        }
+
+        .option-btn.selected {
+            background-color: #d0ebff; /* 浅蓝色 */
+            border-color: #4da3d9;
+        }
+
+        #next-btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        #next-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        #result {
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        /* 庆祝页面样式 */
+        .celebration-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(240, 248, 255, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            text-align: center;
+        }
+
+        h1 {
+            font-family: 'Arial', sans-serif;
+            color: #ff6347;
+            font-size: 3rem;
+        }
+
+        .confetti {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .confetti-piece {
+            position: absolute;
+            font-size: 2rem;
+            animation: confetti-animation 3s linear infinite;
+        }
+
+        @keyframes confetti-animation {
+            0% {
+                transform: translateY(-50px) rotate(0deg);
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="quiz-container">
+        <div id="progress">進捗: 1 / 10</div>
+        <div id="question">ここに質問が表示されます。</div>
+        <div id="options"></div>
+        <button id="next-btn" onclick="nextQuestion()" disabled>次へ ➡️</button>
+    </div>
+    <div id="result" style="display: none;"></div>
+
+    <script>
+        const questions = [
+            {
+                question: "リーと初めて会った日はいつ？🎆",
+                options: ["7月15日", "7月20日", "7月22日", "8月1日"],
+                correct: 2
+            },
+            {
+                question: "リーが研究している分野は？📖",
+                options: ["文学", "心理学", "哲学", "全てが関係している"],
+                correct: 3
+            },
+            {
+                question: "リーの第一志望の大学は？🎓",
+                options: ["埼玉大学", "明治大学", "慶應義塾大学", "福祉大学"],
+                correct: 1
+            },
+            {
+                question: "🐾リーのJellycatぬいぐるみの名前は何ですか？🧸",
+                options: ["バーソロミュー", "チャーリー", "ハリー", "リリィ"],
+                correct: 1
+            },
+            {
+                question: "リーの好きな色は？🌈",
+                options: ["桜色", "紫色", "水浅葱色", "気分次第"],
+                correct: 3
+            },
+            {
+                question: "リーの推しキャラは？",
+                options: ["ちいかわ", "はちわれ", "ももんが", "古本屋"],
+                correct: 2
+            },
+            {
+                question: "リーが旅行したい場所は？",
+                options: ["富士山🗻", "海辺🌊", "鬼怒川🛀", "北海道🌸"],
+                correct: 1
+            },
+            {
+                question: "りんが作った料理の中で、リーが一番好きなのは？",
+                options: ["チャーハン🍚", "牛タン🥩", "たらこパスタ🍝", "鶏肉天ぷら🐔"],
+                correct: 0
+            },
+            {
+                question: "今までで一番印象的な旅行先は？",
+                options: ["御嶽山⛰️", "江ノ島🐚", "鬼怒川❄️", "以上のどれでもない😡"],
+                correct: 0
+            },
+            {
+                question: "リーが好きな体位は？",
+                options: ["正常位", "バック", "立ちバック", "座位"],
+                correct: 1
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let correctAnswers = 0;
+        let selectedAnswer = null;
+
+        function loadQuestion() {
+            const currentQuestion = questions[currentQuestionIndex];
+            document.getElementById("progress").innerText = `進捗🎯: ${currentQuestionIndex + 1} / ${questions.length}`;
+            document.getElementById("question").innerText = currentQuestion.question;
+
+            const optionsContainer = document.getElementById("options");
+            optionsContainer.innerHTML = "";
+
+            currentQuestion.options.forEach((option, index) => {
+                const button = document.createElement("button");
+                button.className = "option-btn";
+                button.innerText = option;
+                button.onclick = () => selectAnswer(index, button);
+                optionsContainer.appendChild(button);
+            });
+
+            document.getElementById("next-btn").disabled = true;
+        }
+
+        function selectAnswer(selectedIndex, buttonElement) {
+            const buttons = document.querySelectorAll(".option-btn");
+            buttons.forEach(btn => btn.classList.remove("selected"));
+
+            buttonElement.classList.add("selected");
+            selectedAnswer = selectedIndex;
+
+            document.getElementById("next-btn").disabled = false;
+        }
+
+        function nextQuestion() {
+            if (selectedAnswer === questions[currentQuestionIndex].correct) {
+                correctAnswers++;
+            }
+
+            selectedAnswer = null;
+            currentQuestionIndex++;
+
+            if (currentQuestionIndex >= questions.length) {
+                showResult();
+            } else {
+                loadQuestion();
+            }
+        }
+
+        function showResult() {
+            document.getElementById("quiz-container").style.display = "none";
+            const resultDiv = document.getElementById("result");
+            resultDiv.style.display = "block";
+
+            if (correctAnswers === questions.length) {
+                resultDiv.innerHTML = "🎉 メリークリスマス！全問正解！🎄";
+                showCelebration(); // 显示庆祝页面
+            } else {
+                resultDiv.innerHTML = `結果: ${correctAnswers} / ${questions.length} 問正解でした。🎅`;
+            }
+        }
+
+        function showCelebration() {
+            const celebrationContainer = document.createElement('div');
+            celebrationContainer.classList.add('celebration-container');
+            celebrationContainer.innerHTML = `
+                <h1>おめでとうございます！🎉</h1>
+                <div class="confetti" id="confetti-container"></div>
+            `;
+            document.body.appendChild(celebrationContainer);
+
+            generateConfetti(); // 生成五彩纸屑
+        }
+
+        function generateConfetti() {
+            const container = document.getElementById('confetti-container');
+            const numberOfConfetti = 200; // 五彩纸屑数量
+            const emojis = ['🎄', '🎅', '🎁', '❄️', '✨', '🌟']; // 圣诞主题emoji
+
+            for (let i = 0; i < numberOfConfetti; i++) {
+                const confettiPiece = document.createElement('div');
+                confettiPiece.classList.add('confetti-piece');
+
+                const emojiIndex = Math.floor(Math.random() * emojis.length); // 随机选择emoji
+                confettiPiece.innerText = emojis[emojiIndex];
+
+                const size = Math.random() * 20 + 20; // 随机大小
+                confettiPiece.style.fontSize = `${size}px`;
+
+                // 设置随机位置
+                confettiPiece.style.left = `${Math.random() * 100}vw`;
+                confettiPiece.style.animationDuration = `${Math.random() * 3 + 3}s`;
+
+                container.appendChild(confettiPiece);
+            }
+        }
+
+        loadQuestion();
+    </script>
+
+</body>
+</html>
